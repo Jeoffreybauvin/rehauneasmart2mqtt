@@ -1,0 +1,9 @@
+certifi==2020.6.20
+chardet==3.0.4
+idna==2.10
+paho-mqtt==1.5.1
+pkg-resources==0.0.0
+pyrehau-neasmart==0.0.6
+python-dotenv==0.14.0
+requests==2.24.0
+urllib3==1.25.10
