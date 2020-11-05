@@ -6,6 +6,7 @@ import paho.mqtt.client as mqtt
 import time
 from dotenv import load_dotenv
 import os
+import re
 import sys
 
 import threading
@@ -35,6 +36,45 @@ ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 log.addHandler(ch)
+
+
+# to do : republish after setting new state
+def set_rehau_cmd(topic, msg):
+    # topic format : rehau/Bureau/t_target/set
+    regex_topic = re.search(MQTT_PREFIX + "\/(\S*)\/(\S*)\/set", topic)
+    if regex_topic:
+        topic_ha_name = regex_topic.group(1)
+        topic_action_name = regex_topic.group(2)
+    else:
+        log.error("[Subscribe] Error while extracting heatarea name and action")
+
+    # Because msg is bytes
+    msg = msg.decode("UTF-8")
+
+    heatareas = rehau.heatareas()
+    if heatareas:
+        for ha in heatareas:
+            # Handle timeouts in pyrehau_neasmart
+            try:
+                status = ha.status
+                heatarea_name = status["heatarea_name"]
+                if heatarea_name == topic_ha_name:
+
+                    if topic_action_name == "t_target":
+                        ha.set_t_target(msg)
+                    elif topic_action_name == "heatarea_mode":
+                        log.error(heatarea_modes)
+                        for ha_modes in heatarea_modes:
+                            if heatarea_modes[ha_modes] == msg:
+                                right_heatarea_mode = ha_modes
+                                break
+                        ha.set_heatarea_mode(right_heatarea_mode)
+                    else:
+                        log.error(
+                            "[Subscribe] This actions %s is unknown" % topic_action_name
+                        )
+            except:
+                log.error("[Subscribe] Something went wrong while talking to Rehau")
 
 
 class Subscribe(threading.Thread):
@@ -106,6 +146,7 @@ def mqtt_on_connect(client, userdata, flags, rc):
 # The callback for when a PUBLISH message is received from the server.
 def mqtt_on_message(client, userdata, msg):
     log.info(msg.topic + " " + str(msg.payload))
+    set_rehau_cmd(msg.topic, msg.payload)
 
 
 def mqtt_on_publish(client, userdata, result):
