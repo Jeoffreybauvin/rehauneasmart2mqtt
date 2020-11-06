@@ -51,7 +51,12 @@ def set_rehau_cmd(topic, msg):
     # Because msg is bytes
     msg = msg.decode("UTF-8")
 
-    heatareas = rehau.heatareas()
+    try:
+        heatareas = self.rehau.heatareas()
+    except:
+        log.error("Timeout on Rehau")
+        heatareas = False
+
     if heatareas:
         for ha in heatareas:
             # Handle timeouts in pyrehau_neasmart
@@ -126,7 +131,6 @@ class Publish(threading.Thread):
                             else:
                                 value = status[item]
 
-                            # print("Publish %s / %s" % (topic, value))
                             self.mqtt.publish(topic, value, qos=1, retain=True)
                     except:
                         log.error("Another timeout on Rehau")
