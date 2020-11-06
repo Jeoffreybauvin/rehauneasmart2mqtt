@@ -145,8 +145,23 @@ def mqtt_on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def mqtt_on_message(client, userdata, msg):
-    log.info(msg.topic + " " + str(msg.payload))
+    log.info("[Subscribe] " + msg.topic + " " + str(msg.payload))
     set_rehau_cmd(msg.topic, msg.payload)
+
+    regex_topic = re.search("(.*)\/set", msg.topic)
+    if regex_topic:
+        topic_to_publish = regex_topic.group(1)
+        log.info(
+            "[Subscribe] Publishing " + str(msg.payload) + " in " + topic_to_publish
+        )
+        client.publish(topic_to_publish, msg.payload, qos=1, retain=True)
+    else:
+        log.error(
+            "[Subscribe] Error while publishing "
+            + str(msg.payload)
+            + " in "
+            + topic_to_publish
+        )
 
 
 def mqtt_on_publish(client, userdata, result):
