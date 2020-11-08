@@ -52,9 +52,9 @@ def set_rehau_cmd(topic, msg):
     msg = msg.decode("UTF-8")
 
     try:
-        heatareas = self.rehau.heatareas()
+        heatareas = rehau.heatareas()
     except:
-        log.error("Timeout on Rehau")
+        log.error("[Republish after setting] Timeout on Rehau")
         heatareas = False
 
     if heatareas:
@@ -68,7 +68,6 @@ def set_rehau_cmd(topic, msg):
                     if topic_action_name == "t_target":
                         ha.set_t_target(msg)
                     elif topic_action_name == "heatarea_mode":
-                        log.error(heatarea_modes)
                         for ha_modes in heatarea_modes:
                             if heatarea_modes[ha_modes] == msg:
                                 right_heatarea_mode = ha_modes
@@ -114,7 +113,7 @@ class Publish(threading.Thread):
             try:
                 heatareas = self.rehau.heatareas()
             except:
-                log.error("Timeout on Rehau")
+                log.error("[Publish] Timeout on Rehau when getting heatareas")
                 heatareas = False
 
             if heatareas:
@@ -133,7 +132,7 @@ class Publish(threading.Thread):
 
                             self.mqtt.publish(topic, value, qos=1, retain=True)
                     except:
-                        log.error("Another timeout on Rehau")
+                        log.error("[Publish] Timeout on Rehau")
 
             log.info("Sleeping Publish thread for %s seconds" % REHAU_CHECK_INTERVAL)
             time.sleep(int(REHAU_CHECK_INTERVAL))
