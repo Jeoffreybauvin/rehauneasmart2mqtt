@@ -20,3 +20,11 @@ You can override environment variables (like `REHAU_HOST`) by creating a `.env` 
    cp .env.example .env
    ```
 2. Edit `.env` with your specific configuration (e.g. set `REHAU_HOST` to your device's IP).
+
+## Deployment
+
+The Docker image is automatically built and pushed to Docker Hub via GitHub Actions.
+
+To enable this, the following secrets must be configured in the GitHub repository:
+- `DOCKERHUB_USERNAME`: Your Docker Hub username.
+- `DOCKERHUB_TOKEN`: Your Docker Hub access token (or password).
