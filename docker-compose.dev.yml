@@ -1,0 +1,20 @@
+---
+services:
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  app:
+    build: .
+    depends_on:
+      - mqtt
+    environment:
+      - MQTT_HOST=${MQTT_HOST:-mqtt}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_PREFIX=${MQTT_PREFIX:-rehau}
+      - REHAU_CHECK_INTERVAL=${REHAU_CHECK_INTERVAL:-10}
+      - REHAU_HOST=${REHAU_HOST:-YOUR_REHAU_IP}
+      - LOGLEVEL=${LOGLEVEL:-DEBUG}
