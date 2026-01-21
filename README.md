@@ -28,3 +28,18 @@ The Docker image is automatically built and pushed to Docker Hub via GitHub Acti
 To enable this, the following secrets must be configured in the GitHub repository:
 - `DOCKERHUB_USERNAME`: Your Docker Hub username.
 - `DOCKERHUB_TOKEN`: Your Docker Hub access token (or password).
+
+### Creating a Release
+
+To trigger a new Docker image build with a version tag:
+
+1. Create a git tag (must start with `v`, e.g., `v1.0.0`):
+   ```bash
+   git tag v1.0.0
+   ```
+2. Push the tag to GitHub:
+   ```bash
+   git push origin v1.0.0
+   ```
+
+This will automatically build and push Docker images tagged with `1.0.0`, `1.0`, and `latest` (if on the default branch).
