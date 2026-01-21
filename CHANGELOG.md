@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.0.3] - 2026-01-21
 
 ### Added
 - **Development Environment**: Added `docker-compose.dev.yml` to run Mosquitto and the application locally.
