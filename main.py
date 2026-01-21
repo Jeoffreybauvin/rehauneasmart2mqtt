@@ -27,7 +27,7 @@ LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
 REHAU_CHECK_INTERVAL = os.getenv("REHAU_CHECK_INTERVAL")
 
 heatarea_modes = {0: "auto", 1: "heat", 2: "off"}
-subscribe_topic_pattern = MQTT_PREFIX + "/+/+/set"
+subscribe_topic_pattern = MQTT_PREFIX + "/heatareas/+/+/set"
 
 log = logging.getLogger(NAME)
 log.setLevel(LOGLEVEL)
@@ -42,7 +42,7 @@ log.addHandler(ch)
 # to do : republish after setting new state
 def set_rehau_cmd(rehau, topic, msg):
     # topic format : rehau/Bureau/t_target/set
-    regex_topic = re.search(MQTT_PREFIX + r"\/(\S*)\/(\S*)\/set", topic)
+    regex_topic = re.search(MQTT_PREFIX + r"\/heatareas\/(\S*)\/(\S*)\/set", topic)
     if regex_topic:
         topic_ha_name = regex_topic.group(1)
         topic_action_name = regex_topic.group(2)
@@ -98,30 +98,54 @@ class Publish(threading.Thread):
         while True:
             # Handle timeouts in pyrehau_neasmart
             try:
-                heatareas = self.rehau.heatareas()
+                iodevices = self.rehau.iodevices()
             except:
-                log.error("Timeout on Rehau")
-                heatareas = False
+                log.error("Timeout on Rehau getting iodevices")
+                iodevices = False
 
-            if heatareas:
-                for ha in heatareas:
-                    # Handle timeouts in pyrehau_neasmart
+            if iodevices:
+                for iodevice in iodevices:
                     try:
-                        status = ha.status
-                        heatarea_name = status["heatarea_name"]
-                        log.info("Publishing for heatarea %s" % heatarea_name)
-                        for item in status:
-                            topic = MQTT_PREFIX + "/" + heatarea_name + "/" + item
-                            if item == "heatarea_mode":
-                                value = heatarea_modes[int(status[item])]
-                            else:
-                                value = status[item]
+                        heatarea_nr = iodevice.heatarea_nr
+                        ha = self.rehau.get_heatarea(heatarea_nr)
+                        if ha:
+                            status = ha.status
+                            heatarea_name = status["heatarea_name"]
+                            log.info("Publishing for heatarea %s" % heatarea_name)
+                            for item in status:
+                                topic = MQTT_PREFIX + "/heatareas/" + heatarea_name + "/" + item
+                                if item == "heatarea_mode":
+                                    value = heatarea_modes[int(status[item])]
+                                else:
+                                    value = status[item]
 
-                            self.mqtt.publish(topic, value, qos=1, retain=True)
-                    except:
-                        log.error("Another timeout on Rehau")
+                                self.mqtt.publish(topic, value, qos=1, retain=True)
+
+                            # Publish iodevice infos
+                            iodevice_status = iodevice.status
+                            log.info("Publishing iodevice for heatarea %s" % heatarea_name)
+                            for item in iodevice_status:
+                                topic = MQTT_PREFIX + "/heatareas/" + heatarea_name + "/iodevice/" + item
+                                value = iodevice_status[item]
+                                self.mqtt.publish(topic, value, qos=1, retain=True)
+                    except Exception as e:
+                        log.error(f"Error processing iodevice: {e}")
 
             log.info("Sleeping Publish thread for %s seconds" % REHAU_CHECK_INTERVAL)
+
+            # Publish global device infos
+            try:
+                device = self.rehau.device()
+                if device:
+                    device_status = device.status
+                    log.info("Publishing global device infos")
+                    for item in device_status:
+                        topic = MQTT_PREFIX + "/device/" + item
+                        value = device_status[item]
+                        self.mqtt.publish(topic, value, qos=1, retain=True)
+            except Exception as e:
+                log.error(f"Error processing global device: {e}")
+
             time.sleep(int(REHAU_CHECK_INTERVAL))
 
 
