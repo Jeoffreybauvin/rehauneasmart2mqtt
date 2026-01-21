@@ -38,21 +38,23 @@ ch.setFormatter(formatter)
 log.addHandler(ch)
 
 
+
 # to do : republish after setting new state
-def set_rehau_cmd(topic, msg):
+def set_rehau_cmd(rehau, topic, msg):
     # topic format : rehau/Bureau/t_target/set
-    regex_topic = re.search(MQTT_PREFIX + "\/(\S*)\/(\S*)\/set", topic)
+    regex_topic = re.search(MQTT_PREFIX + r"\/(\S*)\/(\S*)\/set", topic)
     if regex_topic:
         topic_ha_name = regex_topic.group(1)
         topic_action_name = regex_topic.group(2)
     else:
         log.error("[Subscribe] Error while extracting heatarea name and action")
+        return
 
     # Because msg is bytes
     msg = msg.decode("UTF-8")
 
     try:
-        heatareas = self.rehau.heatareas()
+        heatareas = rehau.heatareas()
     except:
         log.error("Timeout on Rehau")
         heatareas = False
@@ -80,22 +82,6 @@ def set_rehau_cmd(topic, msg):
                         )
             except:
                 log.error("[Subscribe] Something went wrong while talking to Rehau")
-
-
-class Subscribe(threading.Thread):
-    """Thread charge pour consommer"""
-
-    def __init__(self, mqtt, rehau):
-        threading.Thread.__init__(self)
-        self.mqtt = mqtt
-        self.rehau = rehau
-
-    def run(self):
-        """Code ran"""
-        log.info(
-            "Subscribe thread launched, subscribing to %s" % subscribe_topic_pattern
-        )
-        self.mqtt.subscribe(subscribe_topic_pattern)
 
 
 class Publish(threading.Thread):
@@ -143,6 +129,8 @@ class Publish(threading.Thread):
 def mqtt_on_connect(client, userdata, flags, rc):
     if rc == 0:
         log.info("Connected to broker")
+        log.info("Subscribing to %s" % subscribe_topic_pattern)
+        client.subscribe(subscribe_topic_pattern)
     else:
         log.info("Connection failed")
 
@@ -150,9 +138,9 @@ def mqtt_on_connect(client, userdata, flags, rc):
 # The callback for when a PUBLISH message is received from the server.
 def mqtt_on_message(client, userdata, msg):
     log.info("[Subscribe] " + msg.topic + " " + str(msg.payload))
-    set_rehau_cmd(msg.topic, msg.payload)
+    set_rehau_cmd(rehau, msg.topic, msg.payload)
 
-    regex_topic = re.search("(.*)\/set", msg.topic)
+    regex_topic = re.search(r"(.*)\/set", msg.topic)
     if regex_topic:
         topic_to_publish = regex_topic.group(1)
         log.info(
@@ -160,11 +148,9 @@ def mqtt_on_message(client, userdata, msg):
         )
         client.publish(topic_to_publish, msg.payload, qos=1, retain=True)
     else:
+        # Should normally not happen if subscribe pattern is correct, but safe to handle
         log.error(
-            "[Subscribe] Error while publishing "
-            + str(msg.payload)
-            + " in "
-            + topic_to_publish
+            "[Subscribe] Error while reasoning on topic " + msg.topic
         )
 
 
@@ -186,21 +172,22 @@ client.on_message = mqtt_on_message
 client.on_publish = mqtt_on_publish
 client.on_subscribe = mqtt_on_subscribe
 
-client.connect(MQTT_HOST, MQTT_PORT)
+try:
+    client.connect(MQTT_HOST, MQTT_PORT)
+except Exception as e:
+    log.error("Could not connect to MQTT Broker: %s", e)
+    sys.exit(1)
 
 
 # REHAU PART
 rehau = RehauNeaSmart(REHAU_HOST)
 
-subcribe = Subscribe(client, rehau)
 publish = Publish(client, rehau)
 
 try:
     # Lancement des threads
-    subcribe.start()
     publish.start()
 
-    client.loop_forever()
     client.loop_forever()
 except KeyboardInterrupt:
     print("Ctrl+C pressed...")
