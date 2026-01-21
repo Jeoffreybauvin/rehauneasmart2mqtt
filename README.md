@@ -1,3 +1,6 @@
+[![GitHub release]https://img.shields.io/github/v/release/Jeoffreybauvin/rehauneasmart2mqtt.svg?style=flat-square)](https://github.com/Jeoffreybauvin/rehauneasmart2mqtt/releases/latest) | ![Docker Image Version](https://img.shields.io/docker/v/jeoffrey54/rehauneasmart2mqtt)
+
+
 # rehauneasmart2mqtt
 Rehau Nea Smart to MQTT
 

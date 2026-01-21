@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.4] - 2026-01-21
+
+
+### Added
+- **Feature**: Added publishing of IODevice information under `PREFIX/heatareas/NOM/iodevice/`.
+- **Feature**: Added publishing of Global Device information under `PREFIX/device/`.
+
+### Changed
+- **Dependencies**: Upgraded `pyrehau-neasmart` to version `0.0.8`.
+- **CI/CD**: Restricted Docker image push to only occur on version tags (e.g. `v…`).
+- **MQTT**: Changed topic structure to include `/heatareas/` prefix (e.g. `prefix/heatareas/room/temp`).
+- **Refactor**: Improved data retrieval by iterating over IODevices to fetch associated HeatAreas.
+
 ## [0.0.3] - 2026-01-21
 
 ### Added

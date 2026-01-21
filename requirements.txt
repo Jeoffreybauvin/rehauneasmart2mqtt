@@ -2,7 +2,7 @@ certifi==2026.1.4
 chardet==5.2.0
 idna==3.11
 paho-mqtt==2.1.0
-pyrehau-neasmart==0.0.6
+pyrehau-neasmart==0.0.8
 python-dotenv==1.2.1
 requests==2.32.5
 urllib3==2.6.3
