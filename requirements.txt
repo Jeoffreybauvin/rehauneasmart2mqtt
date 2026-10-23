@@ -1,5 +1,5 @@
 certifi==2026.10.23
-chardet==5.2.0
+chardet==7.7.0
 idna==3.20
 paho-mqtt==2.1.0
 pyrehau-neasmart==0.0.9
